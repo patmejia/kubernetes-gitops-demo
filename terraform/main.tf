@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket         = "kubernetes-gitops-demo-terraform-state-dev" # Ensure this bucket exists
+    bucket         = "kubernetes-gitops-demo-terraform-state-dev"
     key            = "terraform/state.tfstate"
-    region         = "us-west-2" # Adjust if using a different region
+    region         = "us-west-2"
   }
 }
 
@@ -42,7 +42,7 @@ resource "aws_subnet" "subnet2" {
 
 # Example EC2 Instance
 resource "aws_instance" "example" {
-  ami           = "ami-12345678" # Replace with a valid AMI ID
+  ami           = "ami-00b44d3dbe1f81742"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.subnet1.id
   tags = {
@@ -52,15 +52,40 @@ resource "aws_instance" "example" {
 
 # S3 Bucket
 resource "aws_s3_bucket" "example" {
-  bucket = "demo-bucket-name"
+  bucket = "kubernetes-gitops-demo-unique-bucket-us-west-2"
   tags = {
     Name = "demo-bucket"
   }
 }
 
-resource "aws_s3_bucket_acl" "example_acl" {
+# S3 Bucket Public Access Block
+resource "aws_s3_bucket_public_access_block" "example_public_access" {
+  bucket                  = aws_s3_bucket.example.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+# S3 Bucket Policy
+resource "aws_s3_bucket_policy" "example_policy" {
   bucket = aws_s3_bucket.example.id
-  acl    = "private"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid       = "AllowFullAccessToBucketOwner",
+        Effect    = "Allow",
+        Principal = "*",
+        Action    = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ],
+        Resource  = "arn:aws:s3:::kubernetes-gitops-demo-unique-bucket-us-west-2/*"
+      }
+    ]
+  })
 }
 
 # Security Group
