@@ -1,37 +1,43 @@
-# Local .terraform directories
-**/.terraform/*
-
-# .tfstate files
-*.tfstate
-*.tfstate.*
-
-# Crash log files
-crash.log
+# Terraform-related files
+**/.terraform/*           # Local .terraform directories
+*.tfstate                 # .tfstate files
+*.tfstate.*               # Variants of .tfstate files
+crash.log                 # Crash logs
 crash.*.log
-
-# Exclude all .tfvars files, which are likely to contain sensitive data, such as
-# password, private keys, and other secrets. These should not be part of version 
-# control as they are data points which are potentially sensitive and subject 
-# to change depending on the environment.
-*.tfvars
+*.tfvars                  # Sensitive variable files
 *.tfvars.json
-
-# Ignore override files as they are usually used to override resources locally and so
-# are not checked in
-override.tf
+override.tf               # Local overrides
 override.tf.json
-*_override.tf
+*_override.tf             # Local override files
 *_override.tf.json
-
-# Ignore transient lock info files created by terraform apply
-.terraform.tfstate.lock.info
-
-# Include override files you do wish to add to version control using negated pattern
-# !example_override.tf
-
-# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
-# example: *tfplan*
-
-# Ignore CLI configuration files
-.terraformrc
+.terraform.tfstate.lock.info # Lock info created during apply
+.terraformrc              # CLI configuration
 terraform.rc
+
+# Kubernetes-related files
+*.yaml~                   # Temporary YAML files created by text editors
+.kubeconfig               # Kubernetes config files containing credentials
+helm-release.*            # Temporary Helm release files
+
+# Node.js or Python (optional Slackbot integration)
+node_modules/             # Node.js dependencies
+npm-debug.log*            # Debug logs for Node.js
+__pycache__/              # Python cache folder
+*.py[cod]                 # Python compiled files
+.env                      # Environment variables file for secrets
+
+# CI/CD-related files
+*.log                     # General log files
+*.bak                     # Backup files
+*.tmp                     # Temporary files
+.env.*                    # Local overrides for environment files
+
+# macOS-specific files
+.DS_Store                 # Finder metadata files
+.AppleDouble              # Resource fork files
+
+# Editor/IDE-specific files
+*.swp                     # Vim swap files
+*.swo                     # Vim temporary files
+.vscode/                  # Visual Studio Code settings
+.idea/                    # JetBrains IDE settings
