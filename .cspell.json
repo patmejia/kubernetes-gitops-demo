@@ -3,11 +3,14 @@
   "language": "en",
   "words": [
     "ArgoCD",
+    "fips",
     "GitOps",
     "Grafana",
     "Kubernetes",
     "Prometheus",
-    "Terraform"
+    "pycache",
+    "Terraform",
+    "tfstate"
   ],
   "allowCompoundWords": true
 }
