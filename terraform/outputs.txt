@@ -1,0 +1,3 @@
+subnet1_id = "subnet-05e2f56d5b3f54e2b"
+subnet2_id = "subnet-040f211c481889c5e"
+vpc_id = "vpc-0edae07052c9ef132"
