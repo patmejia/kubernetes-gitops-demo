@@ -6,11 +6,11 @@ This repository showcases a practical implementation of GitOps principles for ma
 
 ## Features
 
-- **Infrastructure as Code (IaC):** Automate cloud infrastructure with Terraform.
-- **Kubernetes Orchestration:** Deploy containerized applications with Kubernetes manifests.
-- **GitOps Workflow:** Synchronize Kubernetes clusters with Git repository changes via ArgoCD.
-- **Monitoring:** Use Prometheus and Grafana for observability.
-- **Notifications:** Slack integration for deployment and alert notifications.
+- **Infrastructure as Code (IaC):** Automate and manage cloud infrastructure using Terraform.
+- **Kubernetes Orchestration:** Deploy and manage containerized applications with Kubernetes manifests.
+- **GitOps Workflow:** Automate Kubernetes cluster synchronization with Git repository changes using ArgoCD.
+- **Monitoring and Alerts:** Leverage Prometheus and Grafana for observability, with Slack integration for real-time notifications.
+- **Networking:** Configured public and private subnets with accessible analogies and detailed explanations in [`docs/architecture.md`](docs/architecture.md#networking).
 
 ---
 
