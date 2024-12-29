@@ -42,19 +42,18 @@ resource "aws_route_table" "main" {
   }
 }
 
-# Route Table Association for Subnet 1
+# Route Table Associations
 resource "aws_route_table_association" "subnet1" {
   subnet_id      = aws_subnet.subnet1.id
   route_table_id = aws_route_table.main.id
 }
 
-# Route Table Association for Subnet 2
 resource "aws_route_table_association" "subnet2" {
   subnet_id      = aws_subnet.subnet2.id
   route_table_id = aws_route_table.main.id
 }
 
-# Subnet 1
+# Subnets
 resource "aws_subnet" "subnet1" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.subnet1_cidr
@@ -65,7 +64,6 @@ resource "aws_subnet" "subnet1" {
   }
 }
 
-# Subnet 2
 resource "aws_subnet" "subnet2" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.subnet2_cidr
@@ -76,64 +74,9 @@ resource "aws_subnet" "subnet2" {
   }
 }
 
-# Example EC2 Instance
-resource "aws_instance" "example" {
-  ami           = "ami-00b44d3dbe1f81742"
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.subnet1.id
-  tags = {
-    Name = "demo-instance"
-  }
-}
-
-# S3 Bucket
-resource "aws_s3_bucket" "example" {
-  bucket = "kubernetes-gitops-demo-unique-bucket-us-west-2"
-  tags = {
-    Name = "demo-bucket"
-  }
-}
-
-# S3 Bucket Public Access Block
-resource "aws_s3_bucket_public_access_block" "example_public_access" {
-  bucket                  = aws_s3_bucket.example.id
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-# S3 Bucket Policy
-resource "aws_s3_bucket_policy" "example_policy" {
-  bucket = aws_s3_bucket.example.id
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid       = "AllowFullAccessToBucketOwner",
-        Effect    = "Allow",
-        Principal = "*",
-        Action    = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
-        ],
-        Resource  = "arn:aws:s3:::kubernetes-gitops-demo-unique-bucket-us-west-2/*"
-      }
-    ]
-  })
-}
-
-# Security Group
-resource "aws_security_group" "example" {
+# Security Group for EKS
+resource "aws_security_group" "eks_sg" {
   vpc_id = aws_vpc.main.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   egress {
     from_port   = 0
@@ -143,11 +86,91 @@ resource "aws_security_group" "example" {
   }
 
   tags = {
-    Name = "demo-security-group"
+    Name = "eks-security-group"
   }
 }
 
-# DynamoDB Table for State Locking (optional)
+# IAM Role for EKS
+resource "aws_iam_role" "eks_role" {
+  name = "eks-cluster-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_role_policy" {
+  role       = aws_iam_role.eks_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+# EKS Cluster
+resource "aws_eks_cluster" "eks" {
+  name     = "demo-eks-cluster"
+  role_arn = aws_iam_role.eks_role.arn
+
+  vpc_config {
+    subnet_ids = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+    security_group_ids = [aws_security_group.eks_sg.id]
+  }
+
+  tags = {
+    Name = "demo-eks-cluster"
+  }
+}
+
+# EKS Node Group IAM Role
+resource "aws_iam_role" "eks_node_group_role" {
+  name = "eks-node-group-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_group_policy" {
+  role       = aws_iam_role.eks_node_group_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+}
+
+# EKS Node Group
+resource "aws_eks_node_group" "eks_node_group" {
+  cluster_name    = aws_eks_cluster.eks.name
+  node_group_name = "demo-node-group"
+  node_role_arn   = aws_iam_role.eks_node_group_role.arn
+
+  subnet_ids = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+
+  scaling_config {
+    desired_size = 2
+    max_size     = 3
+    min_size     = 1
+  }
+
+  tags = {
+    Name = "eks-node-group"
+  }
+}
+
+# DynamoDB Table for State Locking
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = "terraform-state-locks"
   billing_mode = "PAY_PER_REQUEST"
