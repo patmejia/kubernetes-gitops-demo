@@ -1,8 +1,16 @@
 # Architecture Overview
 
-This document explains the resources and connections configured in this project.
+This project uses the following resources:
 
-## **Resources Used**
+- **VPC** Isolated network for resources.
+- **Subnets:** Separate public and private traffic.
+- **Internet Gateway:** Enables internet access for public subnets.
+- **Route Tables:** Directs traffic between resources.
+- **Public IPs:** Unique addresses for internet access.
+- **Security Groups:** Controls access to resources.
+- **EC2 Instance:** Hosts applications and services.
+
+## Understanding AWS Infrastructure Through Analogies
 
 1. **VPC (Virtual Private Cloud):**
 
@@ -40,37 +48,7 @@ This document explains the resources and connections configured in this project.
 
 ---
 
-## **Networking Analogies**
-
-This section simplifies technical concepts with relatable analogies:
-
-1. **VPC** → "Neighborhood"
-2. **Subnets** → "Streets"
-3. **Internet Gateway** → "Front Gate"
-4. **Route Tables** → "GPS Map"
-5. **Public IPs** → "Mailing Address"
-6. **Security Groups** → "Security Guards"
-7. **EC2 Instance** → "House"
-
----
-
-## **Public IP Configuration**
-
-### **What Happened?**
-
-1. **Subnet Updated**:
-
-   - Subnet `subnet-05e2f56d5b3f54e2b` was modified to auto-assign public IPs.
-   - Terraform recreated the EC2 instance (`example`) to apply this change.
-
-2. **Outcome**:
-   - The EC2 instance now has:
-     - **Public IP:** `54.188.222.157`
-     - **Public DNS:** `ec2-54-188-222-157.us-west-2.compute.amazonaws.com`
-
----
-
-## **Why This Setup is Useful**
+## Why this setup?
 
 - **VPC** isolates and secures resources.
 - **Subnet and Public IP** enable controlled internet access.
