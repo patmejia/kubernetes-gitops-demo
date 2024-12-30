@@ -1,6 +1,6 @@
 # Kubernetes GitOps Demo
 
-This repository showcases a practical implementation of GitOps principles for managing cloud-native infrastructure and applications. The project uses Terraform for infrastructure provisioning, Kubernetes for orchestration, and integrates monitoring and automation tools to ensure a robust and scalable deployment workflow.
+This repository demonstrates a practical implementation of GitOps principles for managing cloud-native infrastructure and applications. It uses Terraform for infrastructure provisioning, Kubernetes for orchestration, and integrates monitoring and automation tools for a robust and scalable deployment workflow.
 
 ---
 
@@ -9,8 +9,33 @@ This repository showcases a practical implementation of GitOps principles for ma
 - **Infrastructure as Code (IaC):** Automate and manage cloud infrastructure using Terraform.
 - **Kubernetes Orchestration:** Deploy and manage containerized applications with Kubernetes manifests.
 - **GitOps Workflow:** Automate Kubernetes cluster synchronization with Git repository changes using ArgoCD.
-- **Monitoring and Alerts:** Leverage Prometheus and Grafana for observability, with Slack integration for real-time notifications.
-- **Networking:** Configured public and private subnets with accessible analogies and detailed explanations in [`docs/architecture.md`](docs/architecture.md).
+- **Monitoring and Alerts:** Leverage Prometheus and Grafana for observability with real-time Slack notifications.
+- **Networking:** Configured public and private subnets to isolate resources.
+
+---
+
+## Architecture Diagram
+
+```mermaid
+graph TD
+    A[VPC: demo-vpc] -->|Public Subnet: subnet-05e2f56d5b3f54e2b| B[Internet Gateway]
+    A -->|Private Subnet: subnet-040f211c481889c5e| C[EC2 Instance: demo-instance]
+    B --> D[Route Table: demo-route-table]
+    D --> C
+    C -->|Collects Metrics| E[Prometheus]
+    E -->|Visualizes Metrics| F[Grafana]
+    C -->|Sends Notifications| G[Slack Integration]
+    E --> G
+
+    subgraph S3 Bucket
+        H[S3 Bucket: demo-bucket] --> I[Public Access Block]
+        H --> J[Bucket Policy]
+    end
+
+    subgraph State Management
+        K[DynamoDB: terraform-state-locks] --> L[Terraform State]
+    end
+```
 
 ---
 
@@ -46,6 +71,8 @@ git clone https://github.com/your-repo/kubernetes-gitops-demo.git
 cd kubernetes-gitops-demo
 ```
 
+---
+
 ### 2. Provision Infrastructure with Terraform
 
 1. Navigate to the Terraform directory:
@@ -67,7 +94,9 @@ cd kubernetes-gitops-demo
    terraform apply "tfplan.out"
    ```
 
-### 3. Deploy Applications
+---
+
+### 3. Deploy Kubernetes Applications
 
 1. Navigate to the Kubernetes directory:
 
@@ -80,6 +109,8 @@ cd kubernetes-gitops-demo
    ```bash
    kubectl apply -f .
    ```
+
+---
 
 ### 4. Set Up Monitoring
 
@@ -95,13 +126,19 @@ cd kubernetes-gitops-demo
    kubectl apply -f .
    ```
 
-3. Access Grafana and configure Prometheus as a data source.
+3. Configure Prometheus as a data source in Grafana:
+
+   - URL: `http://prometheus-server.monitoring.svc.cluster.local:80`
+   - Use the following queries for dashboards:
+     - **CPU Usage:** `sum(rate(container_cpu_usage_seconds_total[5m])) by (namespace)`
+     - **Memory Usage:** `sum(container_memory_usage_bytes) by (namespace)`
+     - **Disk I/O:** `rate(container_fs_reads_bytes_total[5m]) + rate(container_fs_writes_bytes_total[5m])`
+
+4. Save the Grafana dashboard as **Kubernetes GitOps Monitoring**.
 
 ---
 
-## Automation with GitOps
-
-Deployments are automated via ArgoCD:
+### 5. Automate with GitOps Using ArgoCD
 
 1. Install ArgoCD:
 
@@ -109,24 +146,38 @@ Deployments are automated via ArgoCD:
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
    ```
 
-2. Configure ArgoCD to sync with the repository.
+2. Access the ArgoCD UI:
+
+   - Port-forward the ArgoCD server:
+
+     ```bash
+     kubectl port-forward svc/argocd-server -n argocd 8080:443
+     ```
+
+   - Visit: `https://localhost:8080`.
+
+3. Sync ArgoCD with this repository to automate deployments.
 
 ---
 
 ## Monitoring
 
-- **Prometheus:** Gathers metrics from Kubernetes and applications.
-- **Grafana:** Displays customizable dashboards for visualizing metrics.
-- **Alerts:** Configure thresholds for critical metrics like CPU or memory usage.
+- **Prometheus:** Collects metrics from Kubernetes and applications.
+- **Grafana:** Displays customizable dashboards for metrics visualization.
+- **Alerts:** Configure thresholds for CPU, memory, and disk I/O usage to send alerts via Slack.
+
+### Grafana Dashboard Example
+
+Below is a screenshot of the Grafana dashboard set up for monitoring Kubernetes GitOps:
+
+![Kubernetes GitOps Monitoring](media/kubernetes-gitops-monitoring-screenshoot.png)
 
 ---
 
-## Notifications
+## Slack Integration
 
-Slack integration provides real-time updates:
-
-1. Add your Slack webhook to the `slack-integration/` directory.
-2. Configure deployment and monitoring alerts to trigger notifications.
+1. Add your Slack webhook URL to the `slack-integration/` directory.
+2. Configure alerts in Prometheus to trigger Slack notifications for critical events.
 
 ---
 
@@ -134,17 +185,17 @@ Slack integration provides real-time updates:
 
 1. **S3 Bucket Name Conflict**:
 
-   - Problem: Terraform may fail with a `BucketAlreadyExists` error if the S3 bucket name is not unique.
-   - Solution: Use a globally unique name when specifying the bucket in `main.tf`.
+   - **Problem:** Terraform may fail with a `BucketAlreadyExists` error if the S3 bucket name is not unique.
+   - **Solution:** Use a globally unique name for the bucket in `main.tf`.
 
-2. **IAM Role Permission Errors**:
+2. **ArgoCD Sync Issues**:
 
-   - Problem: Insufficient permissions for Terraform to create and manage AWS resources (e.g., EKS, S3, DynamoDB).
-   - Solution: Ensure your AWS credentials have admin-level permissions or the necessary policies for EKS, S3, and DynamoDB.
+   - **Problem:** ArgoCD fails to sync due to improperly formatted Kubernetes manifests.
+   - **Solution:** Validate manifests with `kubectl apply -f <file>` locally before committing.
 
-3. **ArgoCD Sync Issues**:
-   - Problem: ArgoCD fails to sync due to improperly formatted Kubernetes manifests.
-   - Solution: Validate manifests with `kubectl apply -f <file>` locally before committing.
+3. **IAM Role Permission Errors**:
+   - **Problem:** Insufficient permissions for Terraform to create AWS resources.
+   - **Solution:** Ensure your AWS credentials have admin-level permissions or required policies.
 
 ---
 
@@ -159,29 +210,3 @@ Contributions are welcome. Fork this repository, make updates, and submit a pull
 Licensed under the MIT License. See `LICENSE` for details.
 
 ---
-
-### What Was Removed and Why
-
-1. **Detailed CI/CD Pipeline YAML**:
-
-   - **Why Removed:** The GitOps workflow explanation and ArgoCD steps already provide sufficient clarity. Including a full YAML adds unnecessary bulk unless this pipeline is a core deliverable.
-
-2. **Simplified Version Section**:
-
-   - **Why Removed:** This project assumes users are committed to a full GitOps implementation. Including a "simplified version" might confuse the scope or purpose.
-
-3. **Best Practices Section**:
-   - **Why Removed:** The instructions and repository structure inherently reflect best practices, so the section is redundant.
-
-### What Was Added and Why
-
-1. **Slack Integration Details**:
-
-   - **Why Added:** Explicit steps to configure Slack are critical for the notifications feature.
-
-2. **Monitoring Section**:
-
-   - **Why Added:** Clearly separating monitoring from automation ensures users know how to configure and validate their observability setup.
-
-3. **Concise Workflow Steps**:
-   - **Why Added:** Streamlined steps focus on delivering actionable guidance without clutter.
