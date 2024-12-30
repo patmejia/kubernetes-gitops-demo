@@ -10,7 +10,7 @@ This repository showcases a practical implementation of GitOps principles for ma
 - **Kubernetes Orchestration:** Deploy and manage containerized applications with Kubernetes manifests.
 - **GitOps Workflow:** Automate Kubernetes cluster synchronization with Git repository changes using ArgoCD.
 - **Monitoring and Alerts:** Leverage Prometheus and Grafana for observability, with Slack integration for real-time notifications.
-- **Networking:** Configured public and private subnets with accessible analogies and detailed explanations in [`docs/architecture.md`](docs/architecture.md#networking).
+- **Networking:** Configured public and private subnets with accessible analogies and detailed explanations in [`docs/architecture.md`](docs/architecture.md).
 
 ---
 
